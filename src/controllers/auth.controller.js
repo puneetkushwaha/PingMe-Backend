@@ -1,0 +1,179 @@
+import { generateToken } from "../lib/utils.js";
+import User from "../models/user.model.js";
+import bcrypt from "bcryptjs";
+import cloudinary from "../lib/cloudinary.js";
+
+export const signup = async (req, res) => {
+  const { fullName, email, phone, password } = req.body;
+  try {
+    if (!fullName || !email || !phone || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const userExists = await User.findOne({
+      $or: [{ email }, { phone }]
+    });
+
+    if (userExists) {
+      const message = userExists.email === email ? "Email already exists" : "Phone number already exists";
+      return res.status(400).json({ message });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      fullName,
+      email,
+      phone,
+      password: hashedPassword,
+    });
+
+    if (newUser) {
+      // generate jwt token here
+      generateToken(newUser._id, res);
+      await newUser.save();
+
+      res.status(201).json({
+        _id: newUser._id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        phone: newUser.phone,
+        profilePic: newUser.profilePic,
+      });
+    } else {
+      res.status(400).json({ message: "Invalid user data" });
+    }
+  } catch (error) {
+    console.log("Error in signup controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const login = async (req, res) => {
+  const { email, password } = req.body; // 'email' here is used as the general identifier
+  try {
+    const user = await User.findOne({
+      $or: [{ email: email }, { phone: email }]
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    generateToken(user._id, res);
+
+    res.status(200).json({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      profilePic: user.profilePic,
+    });
+  } catch (error) {
+    console.log("Error in login controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const logout = (req, res) => {
+  try {
+    res.cookie("jwt", "", { maxAge: 0 });
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.log("Error in logout controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { profilePic, fullName, about, phone } = req.body;
+    const userId = req.user._id;
+
+    const updateData = {};
+    if (fullName) updateData.fullName = fullName;
+    if (about) updateData.about = about;
+    if (phone) updateData.phone = phone;
+
+    if (profilePic) {
+      const uploadResponse = await cloudinary.uploader.upload(profilePic);
+      updateData.profilePic = uploadResponse.secure_url;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "No fields provided to update" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true }
+    ).select("-password");
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.log("error in update profile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const checkAuth = (req, res) => {
+  try {
+    res.status(200).json(req.user);
+  } catch (error) {
+    console.log("Error in checkAuth controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const toggleArchive = async (req, res) => {
+  try {
+    const { targetUserId } = req.body;
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+
+    const isArchived = user.archivedChats.includes(targetUserId);
+
+    if (isArchived) {
+      await User.findByIdAndUpdate(userId, { $pull: { archivedChats: targetUserId } });
+      res.status(200).json({ message: "Chat unarchived", archivedChats: user.archivedChats.filter(id => id !== targetUserId) });
+    } else {
+      await User.findByIdAndUpdate(userId, { $addToSet: { archivedChats: targetUserId } });
+      res.status(200).json({ message: "Chat archived", archivedChats: [...user.archivedChats, targetUserId] });
+    }
+  } catch (error) {
+    console.log("Error in toggleArchive:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const toggleStar = async (req, res) => {
+  try {
+    const { messageId } = req.body;
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+
+    const isStarred = user.starredMessages.includes(messageId);
+
+    if (isStarred) {
+      await User.findByIdAndUpdate(userId, { $pull: { starredMessages: messageId } });
+      res.status(200).json({ message: "Message unstarred", starredMessages: user.starredMessages.filter(id => id !== messageId) });
+    } else {
+      await User.findByIdAndUpdate(userId, { $addToSet: { starredMessages: messageId } });
+      res.status(200).json({ message: "Message starred", starredMessages: [...user.starredMessages, messageId] });
+    }
+  } catch (error) {
+    console.log("Error in toggleStar:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
