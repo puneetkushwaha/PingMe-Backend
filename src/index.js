@@ -13,6 +13,7 @@ import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import groupRoutes from "./routes/group.route.js";
 import statusRoutes from "./routes/status.route.js";
+import callRoutes from "./routes/call.route.js";
 import { app, server } from "./lib/socket.js";
 
 // Port
