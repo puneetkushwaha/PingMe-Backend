@@ -38,7 +38,7 @@ export const sendPushNotification = async (fcmTokens, messageData) => {
             body: messageText || 'Sent a file'
         },
         data: {
-            chatId: senderId,
+            chatId: String(senderId), // Convert to string - Firebase requires string values only
             click_action: '/'
         }
     };
