@@ -110,7 +110,22 @@ export const sendMessage = async (req, res) => {
     // ✅ Real-time message emit using socket.io
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
+      // User is online - send via socket
       io.to(receiverSocketId).emit("newMessage", savedMessage);
+    } else {
+      // User is offline - send FCM push notification
+      const receiver = await User.findById(receiverId);
+      if (receiver && receiver.fcmTokens && receiver.fcmTokens.length > 0) {
+        const { sendPushNotification } = await import("../lib/firebase-admin.js");
+        const sender = await User.findById(senderId);
+
+        await sendPushNotification(receiver.fcmTokens, {
+          senderName: sender.fullName,
+          messageText: text || (image ? "📷 Photo" : audio ? "🎤 Voice message" : file ? `📎 ${fileName}` : "New message"),
+          senderId: senderId,
+          isGroup: false
+        }).catch(err => console.error("FCM push failed:", err));
+      }
     }
 
     res.status(201).json(savedMessage);
