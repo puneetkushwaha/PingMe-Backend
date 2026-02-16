@@ -40,6 +40,22 @@ export const sendPushNotification = async (fcmTokens, messageData) => {
         data: {
             chatId: String(senderId), // Convert to string - Firebase requires string values only
             click_action: '/'
+        },
+        android: {
+            notification: {
+                sound: 'default', // Android notification sound
+                channelId: 'default'
+            }
+        },
+        webpush: {
+            notification: {
+                requireInteraction: false,
+                vibrate: [200, 100, 200],
+                silent: false
+            },
+            fcmOptions: {
+                link: '/'
+            }
         }
     };
 
