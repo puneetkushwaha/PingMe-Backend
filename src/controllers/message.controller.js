@@ -3,14 +3,43 @@ import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { io, getReceiverSocketId } from "../lib/socket.js";
 
-// ✅ Sidebar ke liye — saare users laao except current user
+// ✅ Sidebar ke liye — saare users laao aur unka last message attach karo
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
 
     const users = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
 
-    res.status(200).json(users);
+    const usersWithLastMessage = await Promise.all(
+      users.map(async (user) => {
+        const lastMessage = await Message.findOne({
+          $or: [
+            { senderId: loggedInUserId, receiverId: user._id },
+            { senderId: user._id, receiverId: loggedInUserId },
+          ],
+        })
+          .sort({ createdAt: -1 })
+          .limit(1);
+
+        return {
+          ...user.toObject(),
+          lastMessage: lastMessage ? (lastMessage.text || (lastMessage.image ? "📷 Image" : lastMessage.audio ? "🎤 Audio" : "📁 File")) : null,
+          lastMessageTime: lastMessage ? lastMessage.createdAt : null, // Add timestamp for sorting
+        };
+      })
+    );
+
+    // Sort users: Most recent message first, then alphabetical or others
+    usersWithLastMessage.sort((a, b) => {
+      if (a.lastMessageTime && b.lastMessageTime) {
+        return new Date(b.lastMessageTime) - new Date(a.lastMessageTime);
+      }
+      if (a.lastMessageTime) return -1;
+      if (b.lastMessageTime) return 1;
+      return 0;
+    });
+
+    res.status(200).json(usersWithLastMessage);
   } catch (error) {
     console.error("Error in getUsersForSidebar:", error.message);
     res.status(500).json({ error: "Internal server error" });
