@@ -42,7 +42,7 @@ io.on("connection", (socket) => {
   // --- Pairing Logic (Instant Code Generation) ---
   const isPairing = socket.handshake.query.isPairing === "true";
   if (isPairing) {
-    const pairingCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const pairingCode = Math.floor(100000 + Math.random() * 900000).toString();
     socket.join(`pairing:${pairingCode}`);
     socket.emit("pairing:code", { pairingCode });
     console.log(`📡 Auto-generated Pairing code: ${pairingCode} for socket: ${socket.id}`);
