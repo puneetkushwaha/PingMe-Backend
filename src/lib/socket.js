@@ -105,7 +105,8 @@ io.on("connection", (socket) => {
             senderName: sender.fullName,
             senderId: userId,
             type: 'call',
-            callType: type
+            callType: type,
+            offer: offer
           });
           console.log(`Sent call FCM notification to ${receiver.fullName}`);
         }

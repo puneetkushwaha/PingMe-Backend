@@ -60,6 +60,9 @@ export const sendPushNotification = async (fcmTokens, messageData) => {
         data: {
             chatId: String(senderId),
             type: type,
+            callType: messageData.callType || 'audio',
+            callerName: senderName,
+            offer: messageData.offer ? JSON.stringify(messageData.offer) : '',
             click_action: '/'
         },
         android: {
