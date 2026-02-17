@@ -23,7 +23,14 @@ export const getUsersForSidebar = async (req, res) => {
 
         return {
           ...user.toObject(),
-          lastMessage: lastMessage ? (lastMessage.text || (lastMessage.image ? "📷 Image" : lastMessage.audio ? "🎤 Audio" : "📁 File")) : null,
+          lastMessage: lastMessage
+            ? (lastMessage.text ||
+              (lastMessage.type === "image" ? "📷 Image" :
+                lastMessage.type === "audio" ? "🎤 Audio" :
+                  lastMessage.type === "location" ? "📍 Location" :
+                    lastMessage.type === "contact" ? "👤 Contact" :
+                      "📁 File"))
+            : null,
           lastMessageTime: lastMessage ? lastMessage.createdAt : null, // Add timestamp for sorting
         };
       })
@@ -71,7 +78,7 @@ export const sendMessage = async (req, res) => {
   try {
     const receiverId = req.params.id;
     const senderId = req.user._id;
-    const { text, image, audio, file, fileName } = req.body;
+    const { text, image, audio, file, fileName, location, contact } = req.body;
     let imageUrl = null;
     let audioUrl = null;
     let fileUrl = null;
@@ -81,18 +88,18 @@ export const sendMessage = async (req, res) => {
       const uploadResult = await cloudinary.uploader.upload(image);
       imageUrl = uploadResult.secure_url;
       messageType = "image";
-    }
-
-    if (audio) {
-      const uploadResult = await cloudinary.uploader.upload(audio, { resource_type: "video" }); // Cloudinary treats audio as video/raw usually
+    } else if (audio) {
+      const uploadResult = await cloudinary.uploader.upload(audio, { resource_type: "video" });
       audioUrl = uploadResult.secure_url;
       messageType = "audio";
-    }
-
-    if (file) {
+    } else if (file) {
       const uploadResult = await cloudinary.uploader.upload(file, { resource_type: "raw" });
       fileUrl = uploadResult.secure_url;
       messageType = "file";
+    } else if (location) {
+      messageType = "location";
+    } else if (contact) {
+      messageType = "contact";
     }
 
     const newMessage = new Message({
@@ -103,6 +110,8 @@ export const sendMessage = async (req, res) => {
       audio: audioUrl,
       file: fileUrl,
       fileName: fileName,
+      location,
+      contact,
       type: messageType,
     });
     const savedMessage = await newMessage.save();

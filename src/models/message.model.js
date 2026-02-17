@@ -35,9 +35,20 @@ const messageSchema = new mongoose.Schema(
     fileName: {
       type: String,
     },
+    location: {
+      lat: Number,
+      lng: Number,
+      address: String,
+    },
+    contact: {
+      fullName: String,
+      phone: String,
+      profilePic: String,
+      userId: mongoose.Schema.Types.ObjectId,
+    },
     type: {
       type: String,
-      enum: ["text", "image", "audio", "video", "file"],
+      enum: ["text", "image", "audio", "video", "file", "location", "contact"],
       default: "text",
     },
     status: {
