@@ -30,28 +30,40 @@ export const sendPushNotification = async (fcmTokens, messageData) => {
         return;
     }
 
-    const { senderName, messageText, senderId, isGroup } = messageData;
+    const { senderName, messageText, senderId, isGroup, type = 'message' } = messageData;
+
+    const isCall = type === 'call';
+    const notificationTitle = isCall
+        ? `Incoming ${messageData.callType || 'video'} call from ${senderName}`
+        : (isGroup ? `New message in group` : `New message from ${senderName}`);
 
     const message = {
         notification: {
-            title: isGroup ? `New message in group` : `New message from ${senderName}`,
-            body: messageText || 'Sent a file'
+            title: notificationTitle,
+            body: isCall ? 'Tap to answer' : (messageText || 'Sent a file')
         },
         data: {
-            chatId: String(senderId), // Convert to string - Firebase requires string values only
+            chatId: String(senderId),
+            type: type,
             click_action: '/'
         },
         android: {
+            priority: isCall ? 'high' : 'normal',
             notification: {
-                sound: 'default', // Android notification sound
-                channelId: 'default'
+                sound: 'default',
+                channelId: 'default',
+                priority: isCall ? 'high' : 'default'
             }
         },
         webpush: {
+            headers: {
+                Urgency: isCall ? 'high' : 'normal'
+            },
             notification: {
-                requireInteraction: false,
-                vibrate: [200, 100, 200],
-                silent: false
+                requireInteraction: isCall,
+                vibrate: [200, 100, 200, 100, 200],
+                silent: false,
+                tag: isCall ? 'incoming-call' : 'new-message'
             },
             fcmOptions: {
                 link: '/'
