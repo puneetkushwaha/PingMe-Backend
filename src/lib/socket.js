@@ -92,25 +92,25 @@ io.on("connection", (socket) => {
       const receiverSocketId = getReceiverSocketId(to);
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("call:incoming", { from: userId, offer, type });
-      } else {
-        // User is offline - send FCM push notification for the call
-        try {
-          const receiver = await User.findById(to);
-          if (receiver && receiver.fcmTokens && receiver.fcmTokens.length > 0) {
-            const { sendPushNotification } = await import("./firebase-admin.js");
-            const sender = await User.findById(userId);
+      }
 
-            await sendPushNotification(receiver.fcmTokens, {
-              senderName: sender.fullName,
-              senderId: userId,
-              type: 'call',
-              callType: type
-            });
-            console.log(`Sent call FCM notification to ${receiver.fullName}`);
-          }
-        } catch (error) {
-          console.error("Failed to send call FCM notification:", error);
+      // ALWAYS send FCM notification for calls to ensure the phone rings
+      try {
+        const receiver = await User.findById(to);
+        if (receiver && receiver.fcmTokens && receiver.fcmTokens.length > 0) {
+          const { sendPushNotification } = await import("./firebase-admin.js");
+          const sender = await User.findById(userId);
+
+          await sendPushNotification(receiver.fcmTokens, {
+            senderName: sender.fullName,
+            senderId: userId,
+            type: 'call',
+            callType: type
+          });
+          console.log(`Sent call FCM notification to ${receiver.fullName}`);
         }
+      } catch (error) {
+        console.error("Failed to send call FCM notification:", error);
       }
     }
   });

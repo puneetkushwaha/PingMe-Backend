@@ -6,17 +6,32 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Read service account credentials
-const serviceAccount = JSON.parse(
-    readFileSync(join(__dirname, '../../firebase-credentials.json'), 'utf8')
-);
+// Initialize Firebase Admin with either file or environment variables
+let serviceAccount;
+try {
+    const credPath = join(__dirname, '../../firebase-credentials.json');
+    serviceAccount = JSON.parse(readFileSync(credPath, 'utf8'));
+} catch (error) {
+    console.warn('⚠️ firebase-credentials.json not found or invalid. Checking environment variables...');
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        try {
+            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        } catch (e) {
+            console.error('❌ FIREBASE_SERVICE_ACCOUNT env var is invalid JSON');
+        }
+    }
+}
 
-// Initialize Firebase Admin
 if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: 'connectly-7ut07'
-    });
+    if (serviceAccount) {
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: serviceAccount.project_id || 'connectly-7ut07'
+        });
+        console.log('✅ Firebase Admin initialized successfully');
+    } else {
+        console.error('❌ Firebase Admin FAILED to initialize: No credentials found.');
+    }
 }
 
 /**

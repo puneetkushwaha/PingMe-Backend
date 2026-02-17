@@ -56,6 +56,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api/fcm", fcmRoutes);
+app.use("/api/calls", callRoutes);
 
 // Production: Serve frontend
 if (process.env.NODE_ENV === "production") {
