@@ -45,10 +45,15 @@ const userSchema = new mongoose.Schema(
       type: [String], // Array of userIds
       default: [],
     },
-    fcmTokens: {
-      type: [String], // Array of FCM tokens (multiple devices)
-      default: [],
-    },
+    linkedDevices: [
+      {
+        deviceId: { type: String, required: true },
+        deviceName: { type: String, required: true },
+        userAgent: { type: String },
+        loginAt: { type: Date, default: Date.now },
+        lastActiveAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

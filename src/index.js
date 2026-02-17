@@ -30,6 +30,7 @@ const allowedOrigins = [
   "http://localhost:5174",
   "https://pingme-1-832l.onrender.com",
   process.env.CLIENT_URL,
+  process.env.WEB_URL,
 ];
 
 // Middlewares

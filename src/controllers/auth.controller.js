@@ -203,17 +203,62 @@ export const pairDevice = async (req, res) => {
   }
 };
 
+export const getLinkedDevices = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    res.status(200).json(user.linkedDevices || []);
+  } catch (error) {
+    console.log("Error in getLinkedDevices:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const unlinkDevice = async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    const userId = req.user._id;
+
+    await User.findByIdAndUpdate(userId, {
+      $pull: { linkedDevices: { deviceId } }
+    });
+
+    res.status(200).json({ message: "Device unlinked successfully" });
+  } catch (error) {
+    console.log("Error in unlinkDevice:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 export const loginWithToken = async (req, res) => {
   try {
-    const { pairingToken } = req.body;
+    const { pairingToken, deviceInfo } = req.body;
     const userId = pairingTokens.get(pairingToken);
 
     if (!userId) {
       return res.status(400).json({ message: "Invalid or expired pairing token" });
     }
 
-    const user = await User.findById(userId).select("-password");
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Update or add device info
+    if (deviceInfo && deviceInfo.deviceId) {
+      const existingDeviceIndex = user.linkedDevices.findIndex(d => d.deviceId === deviceInfo.deviceId);
+
+      const sessionData = {
+        deviceId: deviceInfo.deviceId,
+        deviceName: deviceInfo.deviceName || "Unknown Device",
+        userAgent: deviceInfo.userAgent,
+        lastActiveAt: new Date(),
+      };
+
+      if (existingDeviceIndex > -1) {
+        user.linkedDevices[existingDeviceIndex] = { ...user.linkedDevices[existingDeviceIndex], ...sessionData };
+      } else {
+        user.linkedDevices.push({ ...sessionData, loginAt: new Date() });
+      }
+      await user.save();
+    }
 
     // Remove token after use
     pairingTokens.delete(pairingToken);
@@ -221,7 +266,8 @@ export const loginWithToken = async (req, res) => {
     // Set the JWT cookie
     generateToken(userId, res);
 
-    res.status(200).json(user);
+    const { password, ...userWithoutPassword } = user.toObject();
+    res.status(200).json(userWithoutPassword);
   } catch (error) {
     console.log("Error in loginWithToken:", error);
     res.status(500).json({ message: "Internal Server Error" });
