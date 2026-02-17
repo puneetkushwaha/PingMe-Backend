@@ -39,6 +39,15 @@ io.on("connection", (socket) => {
 
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
+  // --- Pairing Logic (Instant Code Generation) ---
+  const isPairing = socket.handshake.query.isPairing === "true";
+  if (isPairing) {
+    const pairingCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+    socket.join(`pairing:${pairingCode}`);
+    socket.emit("pairing:code", { pairingCode });
+    console.log(`📡 Auto-generated Pairing code: ${pairingCode} for socket: ${socket.id}`);
+  }
+
   socket.on("typing", ({ receiverId }) => {
     const receiverSocketId = getReceiverSocketId(receiverId);
     if (receiverSocketId) {
@@ -155,13 +164,6 @@ io.on("connection", (socket) => {
         io.to(receiverSocketId).emit("call:ended", { from: userId });
       }
     }
-  });
-
-  socket.on("pairing:request", () => {
-    const pairingCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-    socket.join(`pairing:${pairingCode}`);
-    socket.emit("pairing:code", { pairingCode });
-    console.log(`📡 Pairing code generated: ${pairingCode} for socket: ${socket.id}`);
   });
 
   socket.on("disconnect", async () => {
