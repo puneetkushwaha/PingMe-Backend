@@ -30,11 +30,11 @@ export const uploadStatus = async (req, res) => {
 
 export const getStatuses = async (req, res) => {
     try {
-        // Get statuses from followed users or all users (for this clone, let's say all users for now)
-        // and filter those that haven't expired (though TTL index handles deletion, double check)
         const statuses = await Status.find({
             expiresAt: { $gt: new Date() },
-        }).populate("userId", "fullName profilePic");
+        })
+            .populate("userId", "fullName profilePic")
+            .populate("views", "fullName profilePic");
 
         // Group statuses by user
         const groupedStatuses = statuses.reduce((acc, status) => {
@@ -52,6 +52,32 @@ export const getStatuses = async (req, res) => {
         res.status(200).json(Object.values(groupedStatuses));
     } catch (error) {
         console.error("Error in getStatuses:", error.message);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const viewStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user._id;
+
+        const status = await Status.findById(id);
+        if (!status) return res.status(404).json({ error: "Status not found" });
+
+        // Don't add if user is the owner
+        if (status.userId.toString() === userId.toString()) {
+            return res.status(200).json({ message: "Owner cannot view their own status" });
+        }
+
+        // Add user to views if not already present
+        if (!status.views.includes(userId)) {
+            status.views.push(userId);
+            await status.save();
+        }
+
+        res.status(200).json({ message: "Status viewed" });
+    } catch (error) {
+        console.error("Error in viewStatus:", error.message);
         res.status(500).json({ error: "Internal server error" });
     }
 };

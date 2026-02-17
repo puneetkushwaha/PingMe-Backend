@@ -19,6 +19,13 @@ const statusSchema = new mongoose.Schema(
             type: String, // For text statuses
             default: "#111b21",
         },
+        views: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+                default: [],
+            },
+        ],
         expiresAt: {
             type: Date,
             required: true,
