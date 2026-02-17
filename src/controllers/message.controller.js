@@ -29,7 +29,8 @@ export const getUsersForSidebar = async (req, res) => {
                 lastMessage.type === "audio" ? "🎤 Audio" :
                   lastMessage.type === "location" ? "📍 Location" :
                     lastMessage.type === "contact" ? "👤 Contact" :
-                      "📁 File"))
+                      lastMessage.type === "call" ? (lastMessage.callDetails?.status === "missed" ? "📞 Missed Call" : "📞 Call") :
+                        "📁 File"))
             : null,
           lastMessageTime: lastMessage ? lastMessage.createdAt : null, // Add timestamp for sorting
         };

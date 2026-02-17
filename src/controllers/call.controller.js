@@ -1,5 +1,7 @@
 import Call from "../models/call.model.js";
 import User from "../models/user.model.js";
+import Message from "../models/message.model.js";
+import { io, getReceiverSocketId } from "../lib/socket.js";
 
 // Get call history for the current user
 export const getCallHistory = async (req, res) => {
@@ -35,6 +37,31 @@ export const logCall = async (req, res) => {
         });
 
         await newCall.save();
+
+        // Create a Message entry for the call log
+        const newMessage = new Message({
+            senderId: callerId,
+            receiverId,
+            type: "call",
+            callDetails: {
+                type,
+                status,
+                duration
+            }
+        });
+
+        const savedMessage = await newMessage.save();
+
+        // Notify both caller and receiver via socket
+        const receiverSocketId = getReceiverSocketId(receiverId);
+        const callerSocketId = getReceiverSocketId(callerId);
+
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("newMessage", savedMessage);
+        }
+        if (callerSocketId) {
+            io.to(callerSocketId).emit("newMessage", savedMessage);
+        }
 
         res.status(201).json(newCall);
     } catch (error) {
