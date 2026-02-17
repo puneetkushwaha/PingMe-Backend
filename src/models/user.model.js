@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    about: {
+      type: String,
+      default: "Hey there! I am using PingMe.",
+    },
     password: {
       type: String,
       required: true,

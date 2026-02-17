@@ -1,3 +1,4 @@
+import express from "express";
 import { checkAuth, login, logout, signup, updateProfile, toggleArchive, toggleStar, pairDevice, loginWithToken } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 

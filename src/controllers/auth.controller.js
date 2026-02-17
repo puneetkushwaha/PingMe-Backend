@@ -3,7 +3,6 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 import { io } from "../lib/socket.js";
-import jwt from "jsonwebtoken";
 
 // In-memory store for temporary pairing tokens
 const pairingTokens = new Map();
