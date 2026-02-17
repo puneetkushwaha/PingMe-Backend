@@ -131,8 +131,20 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-export const checkAuth = (req, res) => {
+export const checkAuth = async (req, res) => {
   try {
+    // If deviceId is provided, update its lastActiveAt
+    const { deviceId } = req.query;
+    if (deviceId) {
+      const user = req.user;
+      const deviceIndex = user.linkedDevices.findIndex(d => d.deviceId === deviceId);
+
+      if (deviceIndex > -1) {
+        user.linkedDevices[deviceIndex].lastActiveAt = new Date();
+        await user.save();
+      }
+    }
+
     res.status(200).json(req.user);
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
@@ -253,7 +265,11 @@ export const loginWithToken = async (req, res) => {
       };
 
       if (existingDeviceIndex > -1) {
-        user.linkedDevices[existingDeviceIndex] = { ...user.linkedDevices[existingDeviceIndex], ...sessionData };
+        // Mongoose requires .set() or direct property modification for change tracking on array elements
+        user.linkedDevices[existingDeviceIndex].lastActiveAt = new Date();
+        user.linkedDevices[existingDeviceIndex].loginAt = new Date(); // Update login time too
+        user.linkedDevices[existingDeviceIndex].deviceName = sessionData.deviceName;
+        user.linkedDevices[existingDeviceIndex].userAgent = sessionData.userAgent;
       } else {
         user.linkedDevices.push({ ...sessionData, loginAt: new Date() });
       }
