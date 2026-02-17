@@ -31,6 +31,7 @@ const allowedOrigins = [
   "https://pingme-1-832l.onrender.com",
   process.env.CLIENT_URL,
   process.env.WEB_URL,
+  "https://ping-me-web-chi.vercel.app", // Explicitly added to fix CORS
 ];
 
 // Middlewares

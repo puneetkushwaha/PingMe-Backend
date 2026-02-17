@@ -74,6 +74,10 @@ const messageSchema = new mongoose.Schema(
         },
       },
     ],
+    isEncrypted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
