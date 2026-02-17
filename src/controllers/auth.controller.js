@@ -2,6 +2,11 @@ import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
+import { io } from "../lib/socket.js";
+import jwt from "jsonwebtoken";
+
+// In-memory store for temporary pairing tokens
+const pairingTokens = new Map();
 
 export const signup = async (req, res) => {
   const { fullName, email, phone, password } = req.body;
@@ -174,6 +179,52 @@ export const toggleStar = async (req, res) => {
     }
   } catch (error) {
     console.log("Error in toggleStar:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const pairDevice = async (req, res) => {
+  try {
+    const { pairingCode } = req.body;
+    const userId = req.user._id;
+
+    if (!pairingCode) return res.status(400).json({ message: "Pairing code is required" });
+
+    // Generate a temporary token to send via socket
+    const pairingToken = Math.random().toString(36).substring(2, 15);
+    pairingTokens.set(pairingToken, userId);
+
+    // Notify the waiting web instance
+    io.to(`pairing:${pairingCode}`).emit("pairing:authorized", { pairingToken });
+
+    res.status(200).json({ message: "Device paired successfully" });
+  } catch (error) {
+    console.log("Error in pairDevice:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const loginWithToken = async (req, res) => {
+  try {
+    const { pairingToken } = req.body;
+    const userId = pairingTokens.get(pairingToken);
+
+    if (!userId) {
+      return res.status(400).json({ message: "Invalid or expired pairing token" });
+    }
+
+    const user = await User.findById(userId).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Remove token after use
+    pairingTokens.delete(pairingToken);
+
+    // Set the JWT cookie
+    generateToken(userId, res);
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.log("Error in loginWithToken:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

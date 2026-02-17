@@ -156,6 +156,13 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("pairing:request", () => {
+    const pairingCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+    socket.join(`pairing:${pairingCode}`);
+    socket.emit("pairing:code", { pairingCode });
+    console.log(`📡 Pairing code generated: ${pairingCode} for socket: ${socket.id}`);
+  });
+
   socket.on("disconnect", async () => {
     console.log("❌ A user disconnected:", socket.id);
 
