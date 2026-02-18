@@ -234,6 +234,9 @@ export const unlinkDevice = async (req, res) => {
       $pull: { linkedDevices: { deviceId } }
     });
 
+    // Notify the specific user's devices
+    io.to(userId.toString()).emit("device:unlinked", { deviceId });
+
     res.status(200).json({ message: "Device unlinked successfully" });
   } catch (error) {
     console.log("Error in unlinkDevice:", error);
