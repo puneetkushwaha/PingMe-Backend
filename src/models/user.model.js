@@ -59,6 +59,10 @@ const userSchema = new mongoose.Schema(
       profilePic: { type: String, enum: ["everyone", "nobody"], default: "everyone" },
       about: { type: String, enum: ["everyone", "nobody"], default: "everyone" },
       readReceipts: { type: Boolean, default: true },
+      status: { type: String, enum: ["contacts", "except", "share"], default: "contacts" },
+      statusExclude: { type: [String], default: [] }, // Array of userIds
+      statusInclude: { type: [String], default: [] }, // Array of userIds
+      allowSharing: { type: Boolean, default: true },
     },
     chatSettings: {
       enterIsSend: { type: Boolean, default: true },
@@ -69,6 +73,7 @@ const userSchema = new mongoose.Schema(
       showNotifications: { type: Boolean, default: true },
       showPreviews: { type: Boolean, default: true },
       notificationSound: { type: Boolean, default: true },
+      selectedSound: { type: String, default: "notification.mp3" },
     },
   },
   { timestamps: true }
