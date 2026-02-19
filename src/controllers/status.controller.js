@@ -13,11 +13,19 @@ export const uploadStatus = async (req, res) => {
             finalContent = uploadResponse.secure_url;
         }
 
+        // Get user's current privacy settings
+        const privacyMode = req.user.privacy?.status || "contacts";
+        const allowedUsers = req.user.privacy?.statusInclude || [];
+        const excludedUsers = req.user.privacy?.statusExclude || [];
+
         const newStatus = new Status({
             userId,
             type,
             content: finalContent,
             backgroundColor,
+            privacy: privacyMode,
+            allowedUsers: privacyMode === "share" ? allowedUsers : [],
+            excludedUsers: privacyMode === "except" ? excludedUsers : [],
         });
 
         await newStatus.save();
@@ -30,14 +38,37 @@ export const uploadStatus = async (req, res) => {
 
 export const getStatuses = async (req, res) => {
     try {
+        const currentUserId = req.user._id.toString();
+
         const statuses = await Status.find({
             expiresAt: { $gt: new Date() },
         })
             .populate("userId", "fullName profilePic")
             .populate("views.userId", "fullName profilePic");
 
+        // Filter statuses based on privacy settings
+        const filteredStatuses = statuses.filter(status => {
+            // My own statuses are always visible
+            if (status.userId._id.toString() === currentUserId) return true;
+
+            const privacy = status.privacy || "contacts"; // Default to contacts if not set
+
+            if (privacy === "contacts") {
+                return true; // Visible to all contacts (assuming all users are contacts for now)
+            } else if (privacy === "except") {
+                // Check if current user is in excluded list
+                const isExcluded = status.excludedUsers.some(id => id.toString() === currentUserId);
+                return !isExcluded;
+            } else if (privacy === "share") {
+                // Check if current user is in allowed list
+                const isAllowed = status.allowedUsers.some(id => id.toString() === currentUserId);
+                return isAllowed;
+            }
+            return true;
+        });
+
         // Group statuses by user
-        const groupedStatuses = statuses.reduce((acc, status) => {
+        const groupedStatuses = filteredStatuses.reduce((acc, status) => {
             const userId = status.userId._id.toString();
             if (!acc[userId]) {
                 acc[userId] = {

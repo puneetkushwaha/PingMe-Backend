@@ -28,6 +28,11 @@ export const getUsersForSidebar = async (req, res) => {
           userData.profilePic = "";
         }
 
+        // ✅ Privacy Enforcement: Last Seen
+        if (userData.privacy?.lastSeen === "nobody") {
+          userData.lastSeen = null;
+        }
+
         // ✅ Privacy Enforcement: About
         if (userData.privacy?.about === "nobody") {
           userData.about = "";

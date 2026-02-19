@@ -37,6 +37,19 @@ const statusSchema = new mongoose.Schema(
             default: () => new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
             index: { expires: 0 }, // TTL index
         },
+        privacy: {
+            type: String,
+            enum: ["contacts", "except", "share"],
+            default: "contacts",
+        },
+        allowedUsers: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        }],
+        excludedUsers: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        }],
     },
     { timestamps: true }
 );
