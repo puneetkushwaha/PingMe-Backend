@@ -96,7 +96,7 @@ export const sendMessage = async (req, res) => {
   try {
     const receiverId = req.params.id;
     const senderId = req.user._id;
-    const { text, image, audio, file, fileName, location, contact } = req.body;
+    const { text, image, audio, file, fileName, location, contact, isEncrypted } = req.body;
     let imageUrl = null;
     let audioUrl = null;
     let fileUrl = null;
@@ -131,6 +131,7 @@ export const sendMessage = async (req, res) => {
       location,
       contact,
       type: messageType,
+      isEncrypted
     });
     const savedMessage = await newMessage.save();
 
