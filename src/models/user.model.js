@@ -60,6 +60,11 @@ const userSchema = new mongoose.Schema(
       about: { type: String, enum: ["everyone", "nobody"], default: "everyone" },
       readReceipts: { type: Boolean, default: true },
     },
+    chatSettings: {
+      enterIsSend: { type: Boolean, default: true },
+      mediaVisibility: { type: Boolean, default: true },
+      wallpaper: { type: String, default: "" },
+    },
   },
   { timestamps: true }
 );

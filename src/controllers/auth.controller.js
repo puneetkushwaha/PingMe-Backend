@@ -113,6 +113,10 @@ export const updateProfile = async (req, res) => {
       updateData.privacy = { ...req.user.privacy, ...req.body.privacy };
     }
 
+    if (req.body.chatSettings) {
+      updateData.chatSettings = { ...req.user.chatSettings, ...req.body.chatSettings };
+    }
+
     if (profilePic) {
       const uploadResponse = await cloudinary.uploader.upload(profilePic);
       updateData.profilePic = uploadResponse.secure_url;
