@@ -37,9 +37,16 @@ export const getUsersForSidebar = async (req, res) => {
         if (userData.privacy?.about === "nobody") {
           userData.about = "";
         }
+        // ✅ Unread Count Calculation
+        const unreadCount = await Message.countDocuments({
+          senderId: user._id,
+          receiverId: loggedInUserId,
+          status: { $ne: "seen" }
+        });
 
         return {
           ...userData,
+          unreadCount,
           lastMessage: lastMessage
             ? (lastMessage.text ||
               (lastMessage.type === "image" ? "📷 Image" :
@@ -47,7 +54,8 @@ export const getUsersForSidebar = async (req, res) => {
                   lastMessage.type === "location" ? "📍 Location" :
                     lastMessage.type === "contact" ? "👤 Contact" :
                       lastMessage.type === "call" ? (lastMessage.callDetails?.status === "missed" ? "📞 Missed Call" : "📞 Call") :
-                        "📁 File"))
+                        lastMessage.type === "sticker" ? "👻 Sticker" :
+                          "📁 File"))
             : null,
           lastMessageTime: lastMessage ? lastMessage.createdAt : null,
         };
