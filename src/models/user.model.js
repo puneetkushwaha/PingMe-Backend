@@ -65,6 +65,11 @@ const userSchema = new mongoose.Schema(
       mediaVisibility: { type: Boolean, default: true },
       wallpaper: { type: String, default: "" },
     },
+    notificationSettings: {
+      showNotifications: { type: Boolean, default: true },
+      showPreviews: { type: Boolean, default: true },
+      notificationSound: { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );
