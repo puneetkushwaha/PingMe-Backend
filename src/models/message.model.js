@@ -39,6 +39,14 @@ const messageSchema = new mongoose.Schema(
       lat: Number,
       lng: Number,
       address: String,
+      isLive: {
+        type: Boolean,
+        default: false,
+      },
+      liveDuration: {
+        type: Number, // duration in minutes (e.g., 15, 60, 480)
+        default: 0
+      }
     },
     contact: {
       fullName: String,
