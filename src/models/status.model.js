@@ -21,9 +21,14 @@ const statusSchema = new mongoose.Schema(
         },
         views: [
             {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "User",
-                default: [],
+                userId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                },
+                viewedAt: {
+                    type: Date,
+                    default: Date.now,
+                },
             },
         ],
         expiresAt: {

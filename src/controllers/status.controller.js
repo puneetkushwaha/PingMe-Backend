@@ -34,7 +34,7 @@ export const getStatuses = async (req, res) => {
             expiresAt: { $gt: new Date() },
         })
             .populate("userId", "fullName profilePic")
-            .populate("views", "fullName profilePic");
+            .populate("views.userId", "fullName profilePic");
 
         // Group statuses by user
         const groupedStatuses = statuses.reduce((acc, status) => {
@@ -70,8 +70,9 @@ export const viewStatus = async (req, res) => {
         }
 
         // Add user to views if not already present
-        if (!status.views.includes(userId)) {
-            status.views.push(userId);
+        const hasViewed = status.views.some(view => view.userId.toString() === userId.toString());
+        if (!hasViewed) {
+            status.views.push({ userId, viewedAt: new Date() });
             await status.save();
         }
 

@@ -129,12 +129,17 @@ export const sendMessage = async (req, res) => {
     });
     const savedMessage = await newMessage.save();
 
-    // ✅ Real-time message emit using socket.io
+    // ✅ Real-time message emit using room-based emission
+    // Notify the receiver's room (all their tabs/devices)
+    io.to(receiverId).emit("newMessage", savedMessage);
+
+    // ✅ ALSO notify the sender's room (so their other tabs/devices stay in sync)
+    io.to(senderId.toString()).emit("newMessage", savedMessage);
+
+    // FCM fallback only if no one is in the room? 
+    // Socket.io doesn't easily tell you if a room is empty without checking set size
     const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) {
-      // User is online - send via socket
-      io.to(receiverSocketId).emit("newMessage", savedMessage);
-    } else {
+    if (!receiverSocketId) {
       // User is offline - send FCM push notification
       const receiver = await User.findById(receiverId);
       if (receiver && receiver.fcmTokens && receiver.fcmTokens.length > 0) {
