@@ -96,11 +96,11 @@ export const sendMessage = async (req, res) => {
   try {
     const receiverId = req.params.id;
     const senderId = req.user._id;
-    const { text, image, audio, file, fileName, location, contact, isEncrypted } = req.body;
+    const { text, image, audio, file, fileName, location, contact, isEncrypted, type } = req.body;
     let imageUrl = null;
     let audioUrl = null;
     let fileUrl = null;
-    let messageType = "text";
+    let messageType = type === 'sticker' ? 'sticker' : "text";
 
     if (image) {
       const uploadResult = await cloudinary.uploader.upload(image);

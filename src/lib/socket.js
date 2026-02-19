@@ -101,10 +101,19 @@ io.on("connection", (socket) => {
 
       // FCM logic
       try {
+        console.log(`📡 [CALL] Processing FCM for user ${to} (from ${userId})`);
         const receiver = await User.findById(to);
-        if (receiver && receiver.fcmTokens && receiver.fcmTokens.length > 0) {
+        const sender = await User.findById(userId);
+
+        if (!receiver) {
+          console.error(`❌ [CALL] Receiver ${to} not found in DB`);
+          return;
+        }
+
+        if (receiver.fcmTokens && receiver.fcmTokens.length > 0) {
           const { sendPushNotification } = await import("./firebase-admin.js");
-          const sender = await User.findById(userId);
+
+          console.log(`🔔 [CALL] Sending FCM to ${receiver.fullName} (${receiver.fcmTokens.length} tokens)`);
 
           await sendPushNotification(receiver.fcmTokens, {
             senderName: sender.fullName,
@@ -113,10 +122,12 @@ io.on("connection", (socket) => {
             callType: type,
             offer: offer
           });
-          console.log(`Sent call FCM notification to ${receiver.fullName}`);
+          console.log(`✅ [CALL] FCM sent to ${receiver.fullName}`);
+        } else {
+          console.warn(`⚠️ [CALL] No FCM tokens for user ${receiver.fullName} (${to})`);
         }
       } catch (error) {
-        console.error("Failed to send call FCM notification:", error);
+        console.error("❌ [CALL] Failed to send FCM notification:", error);
       }
     }
   });
