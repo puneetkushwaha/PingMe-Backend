@@ -25,7 +25,8 @@ export const getCallHistory = async (req, res) => {
 // Log a new call
 export const logCall = async (req, res) => {
     try {
-        const { receiverId, type, status, duration } = req.body;
+        const { receiverId, type, duration } = req.body;
+        const status = req.body.status || "missed"; // Default to 'missed' if not provided
         const callerId = req.user._id;
 
         const newCall = new Call({

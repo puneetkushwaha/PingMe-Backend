@@ -61,7 +61,7 @@ const messageSchema = new mongoose.Schema(
     },
     callDetails: {
       type: { type: String, enum: ["audio", "video"] },
-      status: { type: String, enum: ["completed", "missed", "rejected"] },
+      status: { type: String, enum: ["completed", "missed", "rejected"], default: "missed" },
       duration: { type: Number, default: 0 },
     },
     status: {
