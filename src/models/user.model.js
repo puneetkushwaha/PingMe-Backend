@@ -54,6 +54,12 @@ const userSchema = new mongoose.Schema(
         lastActiveAt: { type: Date, default: Date.now },
       },
     ],
+    privacy: {
+      lastSeen: { type: String, enum: ["everyone", "nobody"], default: "everyone" },
+      profilePic: { type: String, enum: ["everyone", "nobody"], default: "everyone" },
+      about: { type: String, enum: ["everyone", "nobody"], default: "everyone" },
+      readReceipts: { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );

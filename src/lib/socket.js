@@ -66,6 +66,17 @@ io.on("connection", (socket) => {
     try {
       if (!userId || !senderId) return;
 
+      const [currentUser, senderUser] = await Promise.all([
+        User.findById(userId),
+        User.findById(senderId)
+      ]);
+
+      // ✅ Privacy Enforcement: Read Receipts
+      // If either user has disabled read receipts, we don't update status to "seen" or emit event
+      if (currentUser?.privacy?.readReceipts === false || senderUser?.privacy?.readReceipts === false) {
+        return;
+      }
+
       // Update all messages from senderId to current user (userId)
       await Message.updateMany(
         { senderId, receiverId: userId, status: { $ne: "seen" } },

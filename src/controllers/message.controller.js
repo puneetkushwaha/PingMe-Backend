@@ -21,8 +21,20 @@ export const getUsersForSidebar = async (req, res) => {
           .sort({ createdAt: -1 })
           .limit(1);
 
+        const userData = user.toObject();
+
+        // ✅ Privacy Enforcement: Profile Pic
+        if (userData.privacy?.profilePic === "nobody") {
+          userData.profilePic = "";
+        }
+
+        // ✅ Privacy Enforcement: About
+        if (userData.privacy?.about === "nobody") {
+          userData.about = "";
+        }
+
         return {
-          ...user.toObject(),
+          ...userData,
           lastMessage: lastMessage
             ? (lastMessage.text ||
               (lastMessage.type === "image" ? "📷 Image" :
@@ -32,7 +44,7 @@ export const getUsersForSidebar = async (req, res) => {
                       lastMessage.type === "call" ? (lastMessage.callDetails?.status === "missed" ? "📞 Missed Call" : "📞 Call") :
                         "📁 File"))
             : null,
-          lastMessageTime: lastMessage ? lastMessage.createdAt : null, // Add timestamp for sorting
+          lastMessageTime: lastMessage ? lastMessage.createdAt : null,
         };
       })
     );
