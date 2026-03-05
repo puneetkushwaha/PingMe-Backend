@@ -89,15 +89,17 @@ io.on("connection", (socket) => {
   // --- Calling Signaling ---
   socket.on("call:user", async ({ to, offer, type }) => {
     const group = await Group.findById(to);
+    const sender = await User.findById(userId);
+    const callerName = sender?.fullName || "Unknown";
 
     if (group) {
       group.members.forEach(memberId => {
         if (memberId.toString() !== userId) {
-          io.to(memberId.toString()).emit("call:incoming", { from: userId, offer, type, isGroup: true, groupId: to });
+          io.to(memberId.toString()).emit("call:incoming", { from: userId, callerName, offer, type, isGroup: true, groupId: to });
         }
       });
     } else {
-      io.to(to).emit("call:incoming", { from: userId, offer, type });
+      io.to(to).emit("call:incoming", { from: userId, callerName, offer, type });
 
       // FCM logic
       try {
