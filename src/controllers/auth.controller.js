@@ -39,7 +39,7 @@ export const signup = async (req, res) => {
 
     if (newUser) {
       // generate jwt token here
-      generateToken(newUser._id, res);
+      const token = generateToken(newUser._id, res);
       await newUser.save();
 
       res.status(201).json({
@@ -48,6 +48,7 @@ export const signup = async (req, res) => {
         email: newUser.email,
         phone: newUser.phone,
         profilePic: newUser.profilePic,
+        token,
       });
     } else {
       res.status(400).json({ message: "Invalid user data" });
@@ -74,7 +75,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    generateToken(user._id, res);
+    const token = generateToken(user._id, res);
 
     res.status(200).json({
       _id: user._id,
@@ -82,6 +83,7 @@ export const login = async (req, res) => {
       email: user.email,
       phone: user.phone,
       profilePic: user.profilePic,
+      token,
     });
   } catch (error) {
     console.log("Error in login controller", error.message);
@@ -295,10 +297,10 @@ export const loginWithToken = async (req, res) => {
     pairingTokens.delete(pairingToken);
 
     // Set the JWT cookie
-    generateToken(userId, res);
+    const token = generateToken(userId, res);
 
     const { password, ...userWithoutPassword } = user.toObject();
-    res.status(200).json(userWithoutPassword);
+    res.status(200).json({ ...userWithoutPassword, token });
   } catch (error) {
     console.log("Error in loginWithToken:", error);
     res.status(500).json({ message: "Internal Server Error" });
