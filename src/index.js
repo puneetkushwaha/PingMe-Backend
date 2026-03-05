@@ -61,6 +61,7 @@ app.use("/api/fcm", fcmRoutes);
 app.use("/api/calls", callRoutes);
 
 // Production: Serve frontend
+/* 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../../frontend/dist")));
 
@@ -68,6 +69,7 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(__dirname, "../../frontend", "dist", "index.html"));
   });
 }
+*/
 
 // Global Error Handler
 app.use((err, req, res, next) => {
