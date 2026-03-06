@@ -55,6 +55,15 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 
+// CSP Middleware
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self' blob:; img-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src 'self' https://res.cloudinary.com blob:; connect-src * ws: wss:;"
+  );
+  next();
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
@@ -64,7 +73,6 @@ app.use("/api/fcm", fcmRoutes);
 app.use("/api/calls", callRoutes);
 
 // Production: Serve frontend
-/* 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../../frontend/dist")));
 
@@ -72,7 +80,6 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(__dirname, "../../frontend", "dist", "index.html"));
   });
 }
-*/
 
 // Global Error Handler
 app.use((err, req, res, next) => {
