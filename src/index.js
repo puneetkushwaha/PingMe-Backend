@@ -65,21 +65,16 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.get("/", (req, res) => {
+  res.json({ message: "✅ PingMe API is running..." });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api/fcm", fcmRoutes);
 app.use("/api/calls", callRoutes);
-
-// Production: Serve frontend
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../../frontend/dist")));
-
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../../frontend", "dist", "index.html"));
-  });
-}
 
 // Global Error Handler
 app.use((err, req, res, next) => {
