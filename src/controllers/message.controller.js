@@ -7,8 +7,20 @@ import { io, getReceiverSocketId } from "../lib/socket.js";
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
+    const authUser = await User.findById(loggedInUserId);
 
-    const users = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+    // ✅ Get users who are in contacts OR have an existing message exchange
+    const contactIds = authUser.contacts || [];
+
+    // Find all unique user IDs that shared a message with the logged-in user
+    const messagedUserIds = await Message.distinct("senderId", { receiverId: loggedInUserId });
+    const receivedUserIds = await Message.distinct("receiverId", { senderId: loggedInUserId });
+
+    const relevantUserIds = [...new Set([...contactIds, ...messagedUserIds, ...receivedUserIds])].filter(
+      id => id.toString() !== loggedInUserId.toString()
+    );
+
+    const users = await User.find({ _id: { $in: relevantUserIds } }).select("-password");
 
     const usersWithLastMessage = await Promise.all(
       users.map(async (user) => {

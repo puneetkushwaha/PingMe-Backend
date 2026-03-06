@@ -306,3 +306,38 @@ export const loginWithToken = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const searchUsers = async (req, res) => {
+  try {
+    const { phone } = req.query;
+    if (!phone) return res.status(400).json({ message: "Phone number is required" });
+
+    const user = await User.findOne({ phone: phone }).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.log("Error in searchUsers:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const addContact = async (req, res) => {
+  try {
+    const { contactId } = req.body;
+    const userId = req.user._id;
+
+    if (!contactId) return res.status(400).json({ message: "Contact ID is required" });
+
+    const user = await User.findById(userId);
+    if (!user.contacts.includes(contactId)) {
+      user.contacts.push(contactId);
+      await user.save();
+    }
+
+    res.status(200).json({ message: "Contact added successfully", contacts: user.contacts });
+  } catch (error) {
+    console.log("Error in addContact:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

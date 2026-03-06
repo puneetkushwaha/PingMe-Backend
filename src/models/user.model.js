@@ -75,6 +75,11 @@ const userSchema = new mongoose.Schema(
       notificationSound: { type: Boolean, default: true },
       selectedSound: { type: String, default: "notification.mp3" },
     },
+    contacts: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
   },
   { timestamps: true }
 );
